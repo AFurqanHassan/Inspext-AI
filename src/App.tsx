@@ -15,12 +15,9 @@ const App: React.FC = () => {
     setTotalFiles(acceptedFiles.length);
     setCompletedCount(0);
     
-    const results: ExtractedData[] = [];
-    
     const processingPromises = acceptedFiles.map(async (file) => {
       try {
         const result = await processImage(file);
-        results.push(result);
         setCompletedCount(prev => prev + 1);
         return result;
       } catch (error) {
@@ -30,9 +27,9 @@ const App: React.FC = () => {
       }
     });
 
-    await Promise.all(processingPromises);
+    const results = await Promise.all(processingPromises);
+    const finalResults = results.filter((r): r is ExtractedData => r !== null);
 
-    const finalResults = results.filter(r => r !== null);
     if (finalResults.length > 0) {
       exportToCSV(finalResults);
     }

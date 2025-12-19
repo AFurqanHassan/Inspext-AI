@@ -9,21 +9,25 @@ export interface ExtractedData {
   originalText: string;
 }
 
-let scheduler: Scheduler | null = null;
+let schedulerPromise: Promise<Scheduler> | null = null;
 const WORKER_COUNT = 3;
 
 const getScheduler = async () => {
-  if (scheduler) return scheduler;
+  if (schedulerPromise) return schedulerPromise;
   
-  scheduler = createScheduler();
-  const workerInitializers = Array.from({ length: WORKER_COUNT }, async () => {
-    const worker = await createWorker("eng");
-    scheduler!.addWorker(worker);
-    return worker;
-  });
+  schedulerPromise = (async () => {
+    const scheduler = createScheduler();
+    const workerInitializers = Array.from({ length: WORKER_COUNT }, async () => {
+      const worker = await createWorker("eng");
+      scheduler.addWorker(worker);
+      return worker;
+    });
 
-  await Promise.all(workerInitializers);
-  return scheduler;
+    await Promise.all(workerInitializers);
+    return scheduler;
+  })();
+
+  return schedulerPromise;
 };
 
 export const processImage = async (file: File): Promise<ExtractedData> => {
